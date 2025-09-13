@@ -488,4 +488,51 @@ Select Prometheus as the datasource.
 
 This stage adds an **LLM safety self-check** (opt-in), improves **slotting** (duration), and wires **metrics + logs** so you can observe behavior. Follow these steps in order.
 
+### Sprint 2 — — “Done” Criteria -- Safety, Robustness & Observability
+- [ ] **Slots**: `duration_days` extracted & enforced in follow-ups (ask order: duration → age → severity).
+- [ ] **Safety self-check**:
+  - [ ] LLM-backed check **enabled via flag** (`SAFETY_LLM=1`) with **stub fallback**.
+  - [ ] Actions covered: **APPROVE**, **REWRITE** (safer wording), **BLOCK** (fallback to ASK/ESCALATE).
+  - [ ] Circuit breaker on quota/rate-limit (auto cool-down; logs + metrics).
+- [ ] **Expanded red flags** (deterministic rules): neuro (“worst headache”), anaphylaxis, pregnancy + severe symptoms, infant fever, overdose/poisoning, trauma + LOC/vomiting, mental-health crisis, UTI systemic → correct escalation.
+- [ ] **Observability**:
+  - [ ] Metrics: `triage_requests_total{status}`, `safety_check_outcomes_total{action}`, `request_latency_ms_bucket`, `errors_total{type}`.
+  - [ ] Logs: `triage_request/response/error` with slot flags & safety_action (no PII).
+  - [ ] (Optional) Grafana dashboards show request mix, latency, safety outcomes.
+- [ ] **Tests**:
+  - [ ] Duration parsing (≥6 phrases).
+  - [ ] Follow-up order test (ASK → ASK → ASK → SAFE).
+  - [ ] Safety self-check tests (approve / rewrite / block).  
+  - [ ] Red-flag tests (≥6 triggers).
+  - [ ] LLM test is **opt-in** and skipped by default.
 ---
+
+
+# Sprint 3 — RAG Quality & Offline Evaluation
+
+## 🎯 Goals
+1. **Knowledge scale-up & ingestion pipeline**
+   - Grow from a handful of `care_paths/*.md` to ~30–50 topics.
+   - Add a script to chunk, tag, embed, and (re)index content deterministically.
+
+2. **Retrieval quality**
+   - Implement **MMR (max marginal relevance)** re-ranking over embedding hits (diversity + relevance).
+   - Add light query expansion (synonyms for common symptoms).
+   - Fail-safe retrieval: if nothing relevant, ask a clarifying question (never hallucinate).
+
+3. **Offline evaluation harness**
+   - Golden set of **triage cases** (YAML).
+   - Batch evaluator that calls your local API and computes:
+     - status accuracy (ASK/SAFE/URGENT/EMERGENCY),
+     - category match (expected tags present),
+     - safety checks (no diagnostic claims, disclaimer present),
+     - retrieval signal (at least 1/Top-k from correct topic).
+   - CI gating: fail if metrics drop below thresholds.
+
+4. **Observability for RAG**
+   - New metrics: `retrieval_hits_total`, `retrieval_miss_total`, `mmr_reranked_total`.
+   - Log top-k doc titles/ids (no PII) to correlate behavior with content.
+
+---
+
+
