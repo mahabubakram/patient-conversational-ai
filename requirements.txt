@@ -1,0 +1,21 @@
+fastapi==0.116.1
+uvicorn==0.35.0
+pydantic==2.11.7
+python-dotenv==1.1.1
+PyYAML==6.0.2
+
+spacy==3.7.5
+negspacy==1.0.3
+# (models are installed via `python -m spacy download ...`)
+
+chromadb==0.5.15
+chroma-hnswlib==0.7.6
+hnswlib==0.8.0
+sentence-transformers==3.1.1
+
+sqlalchemy==2.0.35
+# psycopg2-binary==2.9.9  # only if you actually use Postgres
+
+
+# Test
+pytest==8.4.2

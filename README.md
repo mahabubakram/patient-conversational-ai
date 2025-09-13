@@ -219,4 +219,162 @@ Total: ~2 weeks for a functional, safe POC.
 
 
 
+# Conversational Triage POC (Sprint 1)
 
+**Goal:** a safe, *non-diagnostic* conversational assistant that guides patients to sensible next steps (self-care, GP, urgent care, or emergency escalation).  
+**Policy (Sprint 1):**  
+- **Strict Age:** always collect age before final guidance.  
+- **Strict Severity:** always collect severity (mild/moderate/severe/worst) before final guidance.  
+- **Guardrails first:** emergency/urgent patterns override everything.
+
+> **Disclaimer (returned with every response):**  
+> Educational guidance only; not medical advice; not for emergencies. If this is an emergency, call **112**.
+
+---
+
+## Quickstart
+
+```bash
+# (once)
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+
+# run api
+uvicorn app.main:app --reload --port 8000
+# docs: http://localhost:8000/docs
+```
+---
+```bash
+curl -s http://localhost:8000/health
+# → {"status":"ok"}
+```
+### 1) Multi-turn (strict slots)
+#### A) Typical URI (cough + sore throat)
+```bash
+# T1: symptoms → ASK (age)
+curl -s 'http://localhost:8000/api/chat?session_id=s1' \
+  -H 'content-type: application/json' \
+  -d '{"message":"Dry cough and sore throat for 2 days, no fever"}' | jq
+
+# T2: age → ASK (severity)
+curl -s 'http://localhost:8000/api/chat?session_id=s1' \
+  -H 'content-type: application/json' \
+  -d '{"message":"35 years"}' | jq
+
+# T3: severity → SAFE
+curl -s 'http://localhost:8000/api/chat?session_id=s1' \
+  -H 'content-type: application/json' \
+  -d '{"message":"mild"}' | jq
+```
+#### Expect: ASK → ASK → SAFE (with categories, next_step, disclaimer).
+
+#### B) All info in one turn → SAFE
+```bash
+curl -s 'http://localhost:8000/api/chat?session_id=s2' \
+  -H 'content-type: application/json' \
+  -d '{"message":"I am 30 years old, mild sore throat and dry cough for 2 days, no fever"}' | jq
+# → SAFE
+```
+
+#### C) Out-of-order answers (agent should converge)
+```bash
+# T1: age only
+curl -s 'http://localhost:8000/api/chat?session_id=s3' -H 'content-type: application/json' -d '{"message":"35 years"}' | jq
+
+# T2: severity only
+curl -s 'http://localhost:8000/api/chat?session_id=s3' -H 'content-type: application/json' -d '{"message":"moderate"}' | jq
+
+# T3: symptoms with duration → SAFE
+curl -s 'http://localhost:8000/api/chat?session_id=s3' -H 'content-type: application/json' -d '{"message":"Dry cough for 3 days, no fever"}' | jq
+```
+### 2) Guardrails (safety first)
+```bash
+# Emergency — chest pain + shortness of breath
+curl -s 'http://localhost:8000/api/chat?session_id=e1' \
+  -H 'content-type: application/json' \
+  -d '{"message":"Crushing chest pain and shortness of breath"}' | jq
+# → EMERGENCY (call 112)
+
+# Urgent — UTI pattern with systemic signs
+curl -s 'http://localhost:8000/api/chat?session_id=u1' \
+  -H 'content-type: application/json' \
+  -d '{"message":"Burning urination with fever and back pain"}' | jq
+# → URGENT (or EMERGENCY depending on exact wording)
+
+# Emergency — infant fever rule
+curl -s 'http://localhost:8000/api/chat?session_id=p1' \
+  -H 'content-type: application/json' \
+  -d '{"message":"My 2 month old has a fever"}' | jq
+# → EMERGENCY
+
+# Emergency — pregnancy + severe abdominal pain
+curl -s 'http://localhost:8000/api/chat?session_id=p2' \
+  -H 'content-type: application/json' \
+  -d '{"message":"I am pregnant and have severe abdominal pain"}' | jq
+# → EMERGENCY
+```
+### 3) Retrieval breadth (categories should vary)
+```bash
+# Sore throat
+curl -s 'http://localhost:8000/api/chat?session_id=kb1' \
+  -H 'content-type: application/json' \
+  -d '{"message":"I am 28 years old, mild sore throat for 2 days"}' | jq
+
+# Headache
+curl -s 'http://localhost:8000/api/chat?session_id=kb2' \
+  -H 'content-type: application/json' \
+  -d '{"message":"I am 40 years old, mild headache for 1 day"}' | jq
+
+# Urinary symptoms
+curl -s 'http://localhost:8000/api/chat?session_id=kb3' \
+  -H 'content-type: application/json' \
+  -d '{"message":"I am 33 years old, mild burning with urination for 1 day"}' | jq
+```
+### 4) Session isolation (no cross-talk)
+```bash
+# session A
+curl -s 'http://localhost:8000/api/chat?session_id=isoA' -H 'content-type: application/json' \
+  -d '{"message":"Dry cough for 2 days, no fever"}' | jq
+# → ASK (age)
+
+# session B (separate)
+curl -s 'http://localhost:8000/api/chat?session_id=isoB' -H 'content-type: application/json' \
+  -d '{"message":"Dry cough for 2 days, no fever"}' | jq
+# → ASK (age) again
+
+# continue session A
+curl -s 'http://localhost:8000/api/chat?session_id=isoA' -H 'content-type: application/json' -d '{"message":"29 years"}' | jq
+curl -s 'http://localhost:8000/api/chat?session_id=isoA' -H 'content-type: application/json' -d '{"message":"mild"}' | jq
+# → SAFE
+```
+## Running the Smoke Tests (pytest)
+```bash
+pytest -q
+# or
+pytest tests/tests_flow.py -q
+```
+## Harmless to silence Chroma telemetry
+```bash
+export ANONYMIZED_TELEMETRY=false
+export CHROMA_TELEMETRY_ENABLED=false
+```
+## ✅ Sprint 1 — “Done” Criteria
+
+- [ ] **Multi-turn (strict age + strict severity)**
+  - Flow: `symptoms → ASK (age) → ASK (severity) → SAFE` (same `session_id`).
+
+- [ ] **Guardrails (safety-first)**
+  - Chest pain + shortness of breath → **EMERGENCY**
+  - UTI pattern + fever/back pain → **URGENT** *(or **EMERGENCY** if severe wording)*
+  - Infant fever (< 3 months) → **EMERGENCY**
+
+- [ ] **Retrieval breadth**
+  - SAFE responses show **varied categories** aligned with the complaint (e.g., sore_throat, headache, urinary).
+
+- [ ] **Response hygiene**
+  - **Disclaimer** included in **every** response.
+
+- [ ] *(Optional)* **Automated smoke tests**
+  - `pytest -q` passes the four core tests.
