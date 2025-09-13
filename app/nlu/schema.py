@@ -13,3 +13,4 @@ class ExtractionResult(BaseModel):
     pregnant: Optional[bool] = None
     entities: List[Entity] = []
     meta: Dict[str, str] = {}
+    duration_days: Optional[float] = None
