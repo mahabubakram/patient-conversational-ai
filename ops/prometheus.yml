@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "triage_api"
+    static_configs:
+      # Your API is running on the HOST at :8000; Prometheus is in Docker
+      # On macOS/Windows, this hostname points from the container to your host.
+      - targets: ["host.docker.internal:8000"]
+        labels:
+          env: "dev"

@@ -461,3 +461,24 @@ This section defines how the system **should behave** in Sprint 2. It’s implem
   "text": "optional new reply when REWRITE/BLOCK",
   "reason": "short machine-readable reason"
 }
+```
+---
+
+# Monitoring Verification
+
+## Verify Prometheus is scraping:
+
+Open http://localhost:9090/targets
+ → triage_api should be UP
+
+Try a query at http://localhost:9090/graph
+, e.g. triage_requests_total
+
+## Open Grafana:
+
+http://localhost:3000
+ (login: admin / admin)
+
+Go to Dashboards → New → New dashboard → Add visualization
+
+Select Prometheus as the datasource.
