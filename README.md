@@ -482,3 +482,10 @@ http://localhost:3000
 Go to Dashboards → New → New dashboard → Add visualization
 
 Select Prometheus as the datasource.
+
+---
+# Sprint 2 — Safety, Robustness & Observability (Implementation Steps)
+
+This stage adds an **LLM safety self-check** (opt-in), improves **slotting** (duration), and wires **metrics + logs** so you can observe behavior. Follow these steps in order.
+
+---

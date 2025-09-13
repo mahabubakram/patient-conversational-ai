@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router as api_router
 from starlette.responses import Response
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from dotenv import load_dotenv
+load_dotenv()
 app = FastAPI(
     title="Conversational Triage POC",
     version="0.1.0",
@@ -16,6 +18,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 
 @app.get("/health")
 def health():
