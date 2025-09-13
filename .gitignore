@@ -90,3 +90,8 @@ cython_debug/
 *.ipr
 *.iws
 out/
+
+# --------------
+# Chroma DB
+# -------------
+.chroma/
