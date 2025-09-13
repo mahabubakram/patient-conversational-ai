@@ -378,3 +378,86 @@ export CHROMA_TELEMETRY_ENABLED=false
 
 - [ ] *(Optional)* **Automated smoke tests**
   - `pytest -q` passes the four core tests.
+
+
+---
+## 🎯 Sprint 2 — Goals
+
+1. **Safety Upgrade: LLM Self-Check**
+   - Add a post-processing step that reviews each draft reply.
+   - Outcomes: **APPROVE**, **REWRITE** to safer wording, or **BLOCK/ESCALATE** (ASK/URGENT/EMERGENCY).
+   - Enforce: non-diagnostic language, no unsafe instructions, disclaimer present, no conflict with red flags.
+
+2. **Robustness & Signal Quality**
+   - **Duration parsing**: extract/normalize (hours/days/weeks → `duration_days`).
+   - **Severity normalization**: map synonyms → {mild, moderate, severe, worst}.
+   - **Red-flag expansion**: pediatrics, pregnancy, neuro (worst headache, focal deficits), allergy/anaphylaxis, mental-health crisis, poisoning/overdose, trauma.
+
+3. **Observability**
+   - **/metrics** (Prometheus): request count, status breakdown (ASK/SAFE/URGENT/EMERGENCY), safety outcomes (approved/rewritten/blocked), error count, latency histogram.
+   - **Structured logs** (JSON, no PII): `ts`, `request_id`, `session_id`, `status`, `elapsed_ms`, `asked_slots`.
+
+4. **Reliability & UX Polish**
+   - Conservative **fallbacks** if retrieval or safety check fails (fail safe to ASK or URGENT; never crash).
+   - Ensure **disclaimer** and non-diagnostic phrasing are always present.
+
+### Architecture changes (conceptual)
+```mermaid
+flowchart TD
+    U[User message] --> G{Red flags?}
+    G -- Yes --> ER[Escalate Emergency/Urgent]
+    G -- No --> S[Fill slots age, severity, duration]
+    S --> N{Missing info?}
+    N -- Yes --> A[Ask follow-up]
+    A --> U
+    N -- No --> R[Retrieve care-paths]
+    R --> D[Draft SAFE guidance]
+    D --> C{Safety self-check}
+    
+    C -- Approve & Respond --> O[Respond to User]
+    C -- Needs Rewrite --> D
+    C -- Block & Escalate --> ER
+    
+    O --> M[(Metrics & Logs)]
+    ER --> M
+```
+#### Key insertions:
+1. SCheck: a post-processor that reviews the draft reply (not chain-of-thought) for: diagnostic claims, unsafe instructions, missing disclaimer, hallucinated certainty. 
+2. Slots: now includes duration_days and normalized severity.
+
+## 📐 Behavioral Specs
+
+This section defines how the system **should behave** in Sprint 2. It’s implementation-agnostic and drives tests.
+
+---
+
+### 1) LLM Safety Self-Check
+
+**Placement:** After the draft reply is composed (by rules/retrieval), before returning to the user.
+
+**Input:**
+- `draft`: `{status, reply, categories?, next_step?, rationale?, disclaimer?}`
+- `context`: `{red_flags_seen: bool, asked_slots: {age,severity,duration}, retrieval_hits: int, session_id, request_id}`
+
+**Policy checks (must all pass):**
+- **Non-diagnostic language:** No definitive claims (e.g., *“you have pneumonia”*). Prefer *“could be consistent with common viral causes”*.
+- **No unsafe instructions:** No prescriptions, no dosing specifics beyond *“per label”*, no off-label drug names.
+- **Consistency with red flags:** If emergency/urgent conditions present, **must** escalate; SAFE replies must not downplay red flags.
+- **Disclaimer present:** Always include the standard disclaimer.
+- **No hallucinated certainty:** Avoid absolute terms (*“definitely”*, *“guaranteed”*).
+
+**Actions:**
+- `APPROVE`: Pass draft unchanged.
+- `REWRITE`: Return a **safer paraphrase** (preserve `status` and `next_step` intent).
+- `BLOCK/ESCALATE`: Replace with `ASK` or `URGENT/EMERGENCY` and a brief reason.
+
+**Fail-safe:**
+- If the self-check fails/times out, return a **conservative** version of the draft with reinforced caution and log `safety_check_failure = 1`.
+
+**Interface (concept):**
+```json
+{
+  "action": "APPROVE | REWRITE | BLOCK",
+  "text": "optional new reply when REWRITE/BLOCK",
+  "reason": "short machine-readable reason"
+}
