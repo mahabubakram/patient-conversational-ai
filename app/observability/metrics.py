@@ -30,6 +30,22 @@ ERRORS_TOTAL = Counter(
     labelnames=("type",),
 )
 
+
+RETRIEVAL_HITS = Counter(
+    "retrieval_hits_total",
+    "Number of retrieval calls that returned >=1 candidate",
+)
+
+RETRIEVAL_MISS = Counter(
+    "retrieval_miss_total",
+    "Number of retrieval calls that returned 0 candidates",
+)
+
+MMR_RERANKED = Counter(
+    "mmr_reranked_total",
+    "Number of times MMR re-ranking was applied",
+)
+
 # ---- HELPERS ----
 
 def timer_start() -> float:
@@ -49,3 +65,9 @@ def record_safety(action: Optional[str]) -> None:
 
 def record_error(err_type: str) -> None:
     ERRORS_TOTAL.labels(type=err_type).inc()
+
+def record_retrieval(hit: bool) -> None:
+    (RETRIEVAL_HITS if hit else RETRIEVAL_MISS).inc()
+
+def record_mmr() -> None:
+    MMR_RERANKED.inc()

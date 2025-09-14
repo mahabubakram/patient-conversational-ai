@@ -141,7 +141,7 @@ def main():
             print(f"... {len(chunks)-6} more")
         return
 
-    client = chromadb.PersistentClient(path=CHROMA_DIR, settings=Settings(allow_reset=True))
+    client = chromadb.PersistentClient(path=CHROMA_DIR, settings=Settings(allow_reset=True, anonymized_telemetry=False))
     if args.rebuild:
         try:
             client.delete_collection(COLLECTION_NAME)
@@ -159,11 +159,14 @@ def main():
     ids, docs, metas = [], [], []
 
     def flush():
-        if not ids: return
+        if not ids:
+            return
+        vecs = model.encode(docs, normalize_embeddings=True).tolist()
         coll.add(
             ids=list(ids),
             documents=list(docs),
             metadatas=list(metas),  # only str/int/float/bool values
+            embeddings=vecs,  # ← store vectors in Chroma
         )
         ids.clear(); docs.clear(); metas.clear()
 
