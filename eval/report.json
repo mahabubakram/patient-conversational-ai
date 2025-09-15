@@ -1,0 +1,181 @@
+{
+  "summary": {
+    "total_cases": 7,
+    "status_accuracy": 1.0,
+    "category_hit_rate": 0.5,
+    "disclaimer_coverage": 1.0
+  },
+  "results": [
+    {
+      "id": "cough_safe_multiturn",
+      "turns": [
+        "Dry cough and sore throat, no fever",
+        "2 days",
+        "35 years",
+        "mild"
+      ],
+      "expect_status": "SAFE",
+      "got_status": "SAFE",
+      "status_ok": true,
+      "expect_categories_any": [
+        "cough",
+        "upper_respiratory"
+      ],
+      "got_categories": [
+        "sore_throat",
+        "upper_respiratory",
+        "self_care",
+        "cough",
+        "abdominal",
+        "gi"
+      ],
+      "categories_ok": true,
+      "disclaimer_ok": true,
+      "raw": {
+        "status": "SAFE",
+        "reply": "Upper-respiratory symptoms are commonly mild and self-limited if no red flags.",
+        "categories": [
+          "sore_throat",
+          "upper_respiratory",
+          "self_care",
+          "cough",
+          "abdominal",
+          "gi"
+        ],
+        "next_step": "Self-care and monitoring are reasonable; recheck if not improving.",
+        "rationale": "safe_guidance",
+        "disclaimer": "Educational guidance only; not a diagnosis; not for emergencies. If this is an emergency, call 112."
+      }
+    },
+    {
+      "id": "chest_pain_sob_emerg",
+      "turns": [
+        "Crushing chest pain and shortness of breath"
+      ],
+      "expect_status": "EMERGENCY",
+      "got_status": "EMERGENCY",
+      "status_ok": true,
+      "expect_categories_any": [],
+      "got_categories": [],
+      "categories_ok": true,
+      "disclaimer_ok": true,
+      "raw": {
+        "status": "EMERGENCY",
+        "reply": "Your symptoms could be serious. Please call 112 or go to the nearest emergency department now.",
+        "categories": [],
+        "next_step": "Call 112 / go to ER.",
+        "rationale": "red_flags: chest pain + shortness of breath",
+        "disclaimer": "Educational guidance only; not a diagnosis; not for emergencies. If this is an emergency, call 112."
+      }
+    },
+    {
+      "id": "worst_headache_emerg",
+      "turns": [
+        "Worst headache of my life"
+      ],
+      "expect_status": "EMERGENCY",
+      "got_status": "EMERGENCY",
+      "status_ok": true,
+      "expect_categories_any": [],
+      "got_categories": [],
+      "categories_ok": true,
+      "disclaimer_ok": true,
+      "raw": {
+        "status": "EMERGENCY",
+        "reply": "Severe sudden headache can be serious. Please call 112 or go to the ER.",
+        "categories": [],
+        "next_step": "Call 112 / go to ER.",
+        "rationale": "red_flags: worst headache",
+        "disclaimer": "Educational guidance only; not a diagnosis; not for emergencies. If this is an emergency, call 112."
+      }
+    },
+    {
+      "id": "anaphylaxis_emerg",
+      "turns": [
+        "I have hives and trouble breathing"
+      ],
+      "expect_status": "EMERGENCY",
+      "got_status": "EMERGENCY",
+      "status_ok": true,
+      "expect_categories_any": [],
+      "got_categories": [],
+      "categories_ok": true,
+      "disclaimer_ok": true,
+      "raw": {
+        "status": "EMERGENCY",
+        "reply": "Possible severe allergic reaction. Call 112 or go to the ER immediately.",
+        "categories": [],
+        "next_step": "Call 112 / go to ER.",
+        "rationale": "red_flags: anaphylaxis features",
+        "disclaimer": "Educational guidance only; not a diagnosis; not for emergencies. If this is an emergency, call 112."
+      }
+    },
+    {
+      "id": "infant_fever_emerg",
+      "turns": [
+        "My 2 month old has a fever"
+      ],
+      "expect_status": "EMERGENCY",
+      "got_status": "EMERGENCY",
+      "status_ok": true,
+      "expect_categories_any": [],
+      "got_categories": [],
+      "categories_ok": true,
+      "disclaimer_ok": true,
+      "raw": {
+        "status": "EMERGENCY",
+        "reply": "Fever in a baby under 3 months needs emergency assessment. Call 112 or go to the ER.",
+        "categories": [],
+        "next_step": "Call 112 / go to ER.",
+        "rationale": "red_flags: infant (<3 months) + fever",
+        "disclaimer": "Educational guidance only; not a diagnosis; not for emergencies. If this is an emergency, call 112."
+      }
+    },
+    {
+      "id": "uti_urgent",
+      "turns": [
+        "Burning urination with fever and back pain"
+      ],
+      "expect_status": "URGENT",
+      "got_status": "URGENT",
+      "status_ok": true,
+      "expect_categories_any": [
+        "urinary",
+        "uti",
+        "urinary_symptoms"
+      ],
+      "got_categories": [],
+      "categories_ok": false,
+      "disclaimer_ok": true,
+      "raw": {
+        "status": "URGENT",
+        "reply": "Urinary symptoms with fever or back/flank pain need same-day care.",
+        "categories": [],
+        "next_step": "Seek same-day urgent care or contact your GP today.",
+        "rationale": "red_flags: UTI with systemic features",
+        "disclaimer": "Educational guidance only; not a diagnosis; not for emergencies. If this is an emergency, call 112."
+      }
+    },
+    {
+      "id": "insufficient_info_ask",
+      "turns": [
+        "I feel tired"
+      ],
+      "expect_status": "ASK",
+      "got_status": "ASK",
+      "status_ok": true,
+      "expect_categories_any": [],
+      "got_categories": [],
+      "categories_ok": true,
+      "disclaimer_ok": true,
+      "raw": {
+        "status": "ASK",
+        "reply": "How long has this been going on (e.g., hours, days, weeks)?",
+        "categories": [],
+        "next_step": "",
+        "rationale": "missing_required_slots",
+        "disclaimer": "Educational guidance only; not a diagnosis; not for emergencies. If this is an emergency, call 112."
+      }
+    }
+  ]
+}
