@@ -1,0 +1,42 @@
+# Each case runs the turns in order using the same session_id.
+# The final assistant response is compared to expected outcomes.
+- id: cough_safe_multiturn
+  turns:
+    - "Dry cough and sore throat, no fever"
+    - "2 days"
+    - "35 years"
+    - "mild"
+  expect_status: SAFE
+  expect_categories_any: ["cough", "upper_respiratory"]
+
+- id: chest_pain_sob_emerg
+  turns:
+    - "Crushing chest pain and shortness of breath"
+  expect_status: EMERGENCY
+
+- id: worst_headache_emerg
+  turns:
+    - "Worst headache of my life"
+  expect_status: EMERGENCY
+
+- id: anaphylaxis_emerg
+  turns:
+    - "I have hives and trouble breathing"
+  expect_status: EMERGENCY
+
+- id: infant_fever_emerg
+  turns:
+    - "My 2 month old has a fever"
+  expect_status: EMERGENCY
+
+- id: uti_urgent
+  turns:
+    - "Burning urination with fever and back pain"
+  expect_status: URGENT
+  expect_categories_any: ["urinary", "uti", "urinary_symptoms"]
+
+# Optional: an ASK case when info is insufficient
+- id: insufficient_info_ask
+  turns:
+    - "I feel tired"
+  expect_status: ASK

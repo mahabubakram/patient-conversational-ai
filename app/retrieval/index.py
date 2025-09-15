@@ -48,7 +48,7 @@ def _embedder_lazy():
         _model = SentenceTransformer(EMBED_MODEL_NAME)
     return _model
 # K number of results: Top K
-def search(query_text: str, top_n: int = 20, final_k: int = 4) -> List[Dict[str, Any]]:
+def search(query_text: str, top_n: int = 20, final_k: int = 6) -> List[Dict[str, Any]]:
     """
     Return a list of up to final_k dicts: {id, text, meta}
     with MMR re-ranking over a widened candidate pool.
@@ -92,7 +92,7 @@ def search(query_text: str, top_n: int = 20, final_k: int = 4) -> List[Dict[str,
     dmat = np.vstack([c["vec"] for c in candidates])
 
     # Apply MMR to get diverse top-k
-    idxs = mmr_select(np.array(qvec, dtype=np.float32), dmat, k=final_k, lambda_mult=0.9) # how similar it is: 0.9
+    idxs = mmr_select(np.array(qvec, dtype=np.float32), dmat, k=final_k, lambda_mult=0.7) # how similar it is: 0.9
     record_mmr()
 
     selected = [candidates[i] for i in idxs]
